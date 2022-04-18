@@ -3,6 +3,9 @@ from tkinter import *
 from Maestro import Controller
 import _thread
 import time
+import speech_recognition as sr
+import vlc
+
 
 MOTORS = 1
 TURN = 2
@@ -55,6 +58,27 @@ class KeyControl:
         time.sleep(1)
 
     def speechCommand(self):
+        listening = True
+        while listening:
+            with sr.Microphone() as source:
+                r = sr.Recognizer()
+                r.adjust_for_ambient_noise(source)
+                r.energy_threshold = 3000
+                r.pause_threshold = 0.6
+                r.non_speaking_duration = 0.6
+
+                try:
+                    print("listening")
+                    audio = r.listen(source)
+                    print("Got audio")
+                    word = r.recognize_google(audio)
+                    print(word)
+                    if word.lower().find('hello') > -1:
+                        listening = False
+                except sr.UnknownValueError:
+                    print("Don't know that word")
+
+    def keyboard(self):
         pass
 
     ############################################
@@ -64,7 +88,7 @@ window = tk.Tk()
 window.geometry("800x400")
 
 speedVals = [6000] * 8
-durationVals = [0] * 8
+durationVals = [1] * 8
 
 
 def drag_start(event):
@@ -196,7 +220,7 @@ def getArgs(buttonNum):
 
     dur = StringVar(argWindow)
     dur.set(str(durationVals[buttonNum - 1]))
-    durList = ["0", "1", "2", "3", "4", "5"]
+    durList = ["1", "2", "3", "4", "5"]
     duration_menu = OptionMenu(argWindow, dur, *durList)
     duration_menu.configure(width=13, height=2)
     duration_menu.place(x=40, y=90)
@@ -257,6 +281,9 @@ def getInstructions():
             inputs.waistCommand(speedVals[j])
         elif i == "speech":
             inputs.speechCommand()
+        elif i == "keyboard":
+            print("keyboard input")
+            pass
         else:
             print("unknown function")
             time.sleep(1)
